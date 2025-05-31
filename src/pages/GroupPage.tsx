@@ -1,49 +1,63 @@
-import { useEffect, useState } from "react";
-import axiosInstance from "../api/axiosInstance";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../utils/axiosInstance';
 
 const GroupPage = () => {
-    const [groups, setGroups] = useState<any[]>([]);
-    const [groupName, setGroupName] = useState('');
-  
-    useEffect(() => {
-      axiosInstance.get('/groups').then(res => setGroups(res.data));
-    }, []);
-  
-    const createGroup = async () => {
-      await axiosInstance.post('/groups', { name: groupName });
-      alert('그룹이 생성되었습니다!');
-    };
-  
-    return (
-      <div className="p-6">
-        <h2 className="text-2xl font-bold">📦 내 그룹</h2>
-        <ul className="list-disc pl-6 mb-4">
-          {groups.map(group => (
-            <li key={group.id}>
-              <a href={`/group/${group.id}`} className="text-blue-600 hover:underline">
-                {group.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-  
-        <div className="mt-4">
-          <input
-            value={groupName}
-            onChange={e => setGroupName(e.target.value)}
-            className="border p-2 rounded w-64"
-            placeholder="그룹 이름"
-          />
-          <button
-            onClick={createGroup}
-            className="ml-2 bg-green-500 text-white px-4 py-2 rounded"
-          >
-            그룹 생성
-          </button>
-        </div>
-      </div>
-    );
+  const [groups, setGroups] = useState<any[]>([]);
+  const [newGroupName, setNewGroupName] = useState('');
+  const navigate = useNavigate();
+
+  const fetchGroups = async () => {
+    const res = await axiosInstance.get('/groups');
+    setGroups(res.data);
   };
-  
-  export default GroupPage;
-  
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const handleCreateGroup = async () => {
+    try {
+      await axiosInstance.post('/groups', { name: newGroupName });
+      setNewGroupName('');
+      fetchGroups();
+    } catch {
+      alert('그룹 생성 실패');
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto p-4">
+      <h2 className="text-2xl font-bold mb-4">내 그룹</h2>
+
+      <div className="flex gap-2 mb-6">
+        <input
+          value={newGroupName}
+          onChange={e => setNewGroupName(e.target.value)}
+          placeholder="새 그룹 이름"
+          className="border p-2 flex-grow rounded"
+        />
+        <button onClick={handleCreateGroup} className="bg-green-600 text-white px-4 py-2 rounded">
+          생성
+        </button>
+      </div>
+
+      <ul className="space-y-3">
+        {groups.map(group => (
+          <li
+            key={group.id}
+            className="border rounded p-4 hover:shadow cursor-pointer flex justify-between items-center"
+            onClick={() => navigate(`/groups/${group.id}`)}
+          >
+            <div>
+              <h4 className="text-lg font-semibold">{group.name}</h4>
+              <p className="text-sm text-gray-500">구성원 수: {group.memberCount}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default GroupPage;
